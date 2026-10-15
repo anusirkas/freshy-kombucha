@@ -126,7 +126,7 @@ function show(index: number, animate = true, direction = 1) {
   document.dispatchEvent(new CustomEvent("flavour", { detail: f }));
 }
 
-// ---------- controls: dots, arrows, the can itself, keys, swipe and a gentle autoplay ----------
+// ---------- controls: tabs, the can, keys, a swipe or drag, and autoplay ----------
 FLAVOURS.forEach((f, i) => {
   const b = document.createElement("button");
   b.type = "button";
@@ -136,36 +136,58 @@ FLAVOURS.forEach((f, i) => {
   b.style.setProperty("--tab-label", `url(${(assets as Record<string, FlavourAssets>)[f.id].label})`);
   b.innerHTML = `<span class="tab-can" aria-hidden="true"></span><span>${f.word}</span>`;
   b.addEventListener("click", () => {
-    stopAutoplay();
-    if (i !== current) show(i, true, i > current ? 1 : -1);
+    if (i !== current) choose(i, i > current ? 1 : -1);
   });
   dots.appendChild(b);
 });
-$("next").addEventListener("click", () => (stopAutoplay(), show(current + 1, true, 1)));
-$("prev").addEventListener("click", () => (stopAutoplay(), show(current - 1, true, -1)));
-$("can").addEventListener("click", () => (stopAutoplay(), show(current + 1)));
-hero.addEventListener("keydown", (e) => {
-  if (e.key === "ArrowRight") (stopAutoplay(), show(current + 1));
-  if (e.key === "ArrowLeft") (stopAutoplay(), show(current - 1, true, -1));
+
+// the flavours keep changing by themselves; choosing one just restarts the clock
+const AUTOPLAY_MS = 5000;
+let autoplay = 0;
+let heroVisible = true;
+function restartAutoplay() {
+  window.clearInterval(autoplay);
+  if (!reducedMotion && heroVisible && !document.hidden) autoplay = window.setInterval(() => show(current + 1), AUTOPLAY_MS);
+}
+function choose(index: number, direction = 1) {
+  show(index, true, direction);
+  restartAutoplay();
+}
+
+// a swipe on a phone or a drag with the mouse; a short press on the can is a click
+let dragX: number | null = null;
+let dragged = false;
+hero.addEventListener("pointerdown", (e) => {
+  if ((e.target as HTMLElement).closest(".flavour-tabs")) return;
+  dragX = e.clientX;
+  dragged = false;
 });
-let touchX = 0;
-hero.addEventListener("touchstart", (e) => (touchX = e.touches[0].clientX), { passive: true });
-hero.addEventListener("touchend", (e) => {
-  const dx = e.changedTouches[0].clientX - touchX;
-  if (Math.abs(dx) > 50) (stopAutoplay(), show(current + (dx < 0 ? 1 : -1), true, dx < 0 ? 1 : -1));
+hero.addEventListener("pointerup", (e) => {
+  if (dragX === null) return;
+  const dx = e.clientX - dragX;
+  dragX = null;
+  if (Math.abs(dx) > 50) {
+    dragged = true;
+    choose(current + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
+  }
+});
+hero.addEventListener("pointercancel", () => (dragX = null));
+hero.addEventListener("dragstart", (e) => e.preventDefault());
+$("can").addEventListener("click", () => {
+  if (!dragged) choose(current + 1);
+  dragged = false;
+});
+hero.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowRight") choose(current + 1);
+  if (e.key === "ArrowLeft") choose(current - 1, -1);
 });
 
-let autoplay = reducedMotion ? 0 : window.setInterval(() => show(current + 1), 6000);
-function stopAutoplay() {
-  window.clearInterval(autoplay);
-  autoplay = 0;
-}
-hero.addEventListener("pointerenter", () => {
-  if (autoplay) window.clearInterval(autoplay);
-});
-hero.addEventListener("pointerleave", () => {
-  if (autoplay) autoplay = window.setInterval(() => show(current + 1), 6000);
-});
+// only run while the hero is on screen and the tab is open
+new IntersectionObserver(([entry]) => {
+  heroVisible = entry.isIntersecting;
+  restartAutoplay();
+}).observe(hero);
+document.addEventListener("visibilitychange", restartAutoplay);
 
 // fruit drifts with the pointer, by depth
 hero.addEventListener("pointermove", (e) => {
@@ -184,12 +206,14 @@ const PACKS = [
   { size: 24, price: "€59.99" },
 ];
 const packsEl = $("packs");
-for (const p of PACKS) {
-  const pack = document.createElement("article");
+let selectedPack = 0;
+const packEls = PACKS.map((p, index) => {
+  const pack = document.createElement("button");
+  pack.type = "button";
+  pack.role = "radio";
   pack.className = "pack";
-  const cans = document.createElement("div");
+  const cans = document.createElement("span");
   cans.className = "pack-cans";
-  cans.style.setProperty("--rows", String(p.size / 6));
   for (let i = 0; i < p.size; i++) {
     const c = document.createElement("span");
     c.className = "mini-can";
@@ -197,9 +221,29 @@ for (const p of PACKS) {
     cans.appendChild(c);
   }
   pack.append(cans);
-  pack.insertAdjacentHTML("beforeend", `<p class="pack-meta"><span>${p.size} pack</span><span>${p.price}</span></p>`);
+  pack.insertAdjacentHTML("beforeend", `<span class="pack-meta"><span>${p.size} pack</span><span>${p.price}</span></span>`);
+  pack.addEventListener("click", () => selectPack(index));
   packsEl.appendChild(pack);
+  return pack;
+});
+const buy = $("buy");
+function selectPack(index: number) {
+  selectedPack = index;
+  packEls.forEach((el, i) => {
+    el.setAttribute("aria-checked", String(i === index));
+    el.tabIndex = i === index ? 0 : -1;
+  });
+  buy.textContent = `Buy ${PACKS[index].size} pack · ${PACKS[index].price}`;
 }
+// arrow keys move the choice, as in any radio group
+packsEl.addEventListener("keydown", (e) => {
+  const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
+  if (!step) return;
+  e.preventDefault();
+  selectPack((selectedPack + step + PACKS.length) % PACKS.length);
+  packEls[selectedPack].focus();
+});
+selectPack(1);
 const setPackLabel = (f: Flavour) =>
   document.documentElement.style.setProperty("--label", `url(${(assets as Record<string, FlavourAssets>)[f.id].label})`);
 setPackLabel(FLAVOURS[0]);
@@ -211,7 +255,9 @@ const say = (el: HTMLElement, text: string) => {
   el.classList.add("show");
   window.setTimeout(() => el.classList.remove("show"), 3200);
 };
-$("buy").addEventListener("click", () => say(toast, "This is a demo: there's no checkout, but thank you for wanting some."));
+buy.addEventListener("click", () =>
+  say(toast, `A ${PACKS[selectedPack].size} pack, good choice! This is a demo, so there's no checkout.`),
+);
 $("reseller").addEventListener("click", () => say(toast, "This is a demo page; the reseller programme is imaginary."));
 
 // ---------- testimonials: step through with the arrows, wrapping at the ends ----------

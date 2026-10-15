@@ -205,6 +205,15 @@ button {
   }
 }
 
+.hero {
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+.hero:active {
+  cursor: grabbing;
+}
+
 .can {
   position: absolute;
   left: 50%;
@@ -255,14 +264,6 @@ button {
 .side-arrow:hover {
   background: var(--white);
   transform: scale(1.1);
-}
-
-.side-arrow.prev {
-  left: clamp(12px, 3vw, 48px);
-}
-
-.side-arrow.next {
-  right: clamp(12px, 3vw, 48px);
 }
 
 /* flavour tabs: a tiny can and the name, the current one filled in */
@@ -455,6 +456,43 @@ main > section:not(.hero) {
   gap: clamp(24px, 6vw, 80px);
 }
 
+/* each pack is a choice: the chosen one sits on a white card, its price in a pink pill */
+.pack {
+  display: grid;
+  justify-items: center;
+  padding: 18px 18px 16px;
+  border: 0;
+  border-radius: 22px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  opacity: 0.6;
+  transition:
+    background 0.3s,
+    box-shadow 0.3s,
+    opacity 0.3s,
+    transform 0.4s var(--spring);
+}
+
+.pack:hover {
+  opacity: 0.9;
+}
+
+.pack[aria-checked="true"] {
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 0 0 3px var(--pink),
+    0 18px 40px rgba(0, 0, 0, 0.12);
+  opacity: 1;
+  transform: translateY(-8px);
+}
+
+.pack:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 4px;
+}
+
 .pack-cans {
   display: grid;
   grid-template-columns: repeat(6, 22px);
@@ -475,7 +513,8 @@ main > section:not(.hero) {
   transition: background 0.4s;
 }
 
-.pack:hover .mini-can {
+.pack:hover .mini-can,
+.pack[aria-checked="true"] .mini-can {
   animation: hop 0.5s var(--spring) both;
   animation-delay: calc(var(--i) * 45ms);
 }
@@ -490,8 +529,17 @@ main > section:not(.hero) {
   display: flex;
   justify-content: space-between;
   gap: 24px;
-  margin: 14px 4px 0;
+  align-self: stretch;
+  margin: 14px 0 0;
+  padding: 6px 14px;
+  border-radius: 999px;
   font-size: 15px;
+  transition: background 0.3s, color 0.3s;
+}
+
+.pack[aria-checked="true"] .pack-meta {
+  background: var(--pink);
+  color: var(--white);
 }
 
 /* ---------- Ingredients & benefits ---------- */
@@ -809,10 +857,6 @@ main > section:not(.hero) {
   .nav nav {
     gap: 14px;
   }
-  /* on a phone the tabs and a swipe are enough; side arrows would sit on the fruit */
-  .hero .side-arrow {
-    display: none;
-  }
   .flavour-tabs {
     bottom: 18px;
     gap: 4px;
@@ -873,7 +917,8 @@ main > section:not(.hero) {
 @media (prefers-reduced-motion: reduce) {
   .piece.leaf,
   .bubbles span,
-  .pack:hover .mini-can {
+  .pack:hover .mini-can,
+  .pack[aria-checked="true"] .mini-can {
     animation: none;
   }
 }
