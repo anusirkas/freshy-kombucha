@@ -29,24 +29,28 @@ let current = 0;
 let busy = false;
 
 // ---------- the big word: letters roll up out, the new ones roll up in ----------
-function setWord(text: string, animate: boolean) {
+function setWord(text: string, animate: boolean, direction: number) {
+  // the old word slides out the way we're going, the new one comes in from the other side
+  word.style.setProperty("--dir", String(direction));
   const oldLine = word.querySelector<HTMLElement>(".word-line");
   if (oldLine) {
-    [...oldLine.children].forEach((l, i) => {
-      (l as HTMLElement).style.transitionDelay = `${i * 35}ms`;
+    [...oldLine.children].forEach((l, i, all) => {
+      const order = direction > 0 ? i : all.length - 1 - i;
+      (l as HTMLElement).style.transitionDelay = `${order * 30}ms`;
       l.classList.add("out");
     });
-    window.setTimeout(() => oldLine.remove(), animate ? 800 : 0);
+    window.setTimeout(() => oldLine.remove(), animate ? 900 : 0);
   }
   word.setAttribute("aria-label", text);
   const line = document.createElement("span");
   line.className = "word-line";
   line.setAttribute("aria-hidden", "true");
-  [...text].forEach((ch, i) => {
+  [...text].forEach((ch, i, all) => {
     const l = document.createElement("span");
     l.className = "letter" + (animate ? " in" : "");
     l.textContent = ch;
-    l.style.transitionDelay = `${180 + i * 45}ms`;
+    const order = direction > 0 ? i : all.length - 1 - i;
+    l.style.transitionDelay = `${220 + order * 40}ms`;
     line.appendChild(l);
   });
   word.appendChild(line);
@@ -93,7 +97,7 @@ function setControls() {
   });
 }
 
-function show(index: number, animate = true) {
+function show(index: number, animate = true, direction = 1) {
   if (busy && animate) return;
   const f = FLAVOURS[(index + FLAVOURS.length) % FLAVOURS.length];
   current = FLAVOURS.indexOf(f);
@@ -111,12 +115,12 @@ function show(index: number, animate = true) {
       wipe.classList.remove("open");
       busy = false;
     }, 950);
-    void can.switchTo(label(f));
+    void can.switchTo(label(f), direction);
   } else {
     document.documentElement.style.setProperty("--flavour", f.colour);
     void can.show(label(f));
   }
-  setWord(f.word, motion);
+  setWord(f.word, motion, direction);
   setFruit(f, motion);
   tag.textContent = f.tag;
   hero.dataset.flavour = f.id;
@@ -129,27 +133,28 @@ FLAVOURS.forEach((f, i) => {
   const b = document.createElement("button");
   b.type = "button";
   b.role = "tab";
-  b.className = "dot";
+  b.className = "flavour-tab";
   b.style.setProperty("--c", f.colour);
-  b.setAttribute("aria-label", f.word);
+  b.style.setProperty("--tab-label", `url(${(assets as Record<string, FlavourAssets>)[f.id].label})`);
+  b.innerHTML = `<span class="tab-can" aria-hidden="true"></span><span>${f.word}</span>`;
   b.addEventListener("click", () => {
     stopAutoplay();
-    if (i !== current) show(i);
+    if (i !== current) show(i, true, i > current ? 1 : -1);
   });
   dots.appendChild(b);
 });
-$("next").addEventListener("click", () => (stopAutoplay(), show(current + 1)));
-$("prev").addEventListener("click", () => (stopAutoplay(), show(current - 1)));
+$("next").addEventListener("click", () => (stopAutoplay(), show(current + 1, true, 1)));
+$("prev").addEventListener("click", () => (stopAutoplay(), show(current - 1, true, -1)));
 $("can").addEventListener("click", () => (stopAutoplay(), show(current + 1)));
 hero.addEventListener("keydown", (e) => {
   if (e.key === "ArrowRight") (stopAutoplay(), show(current + 1));
-  if (e.key === "ArrowLeft") (stopAutoplay(), show(current - 1));
+  if (e.key === "ArrowLeft") (stopAutoplay(), show(current - 1, true, -1));
 });
 let touchX = 0;
 hero.addEventListener("touchstart", (e) => (touchX = e.touches[0].clientX), { passive: true });
 hero.addEventListener("touchend", (e) => {
   const dx = e.changedTouches[0].clientX - touchX;
-  if (Math.abs(dx) > 50) (stopAutoplay(), show(current + (dx < 0 ? 1 : -1)));
+  if (Math.abs(dx) > 50) (stopAutoplay(), show(current + (dx < 0 ? 1 : -1), true, dx < 0 ? 1 : -1));
 });
 
 let autoplay = reducedMotion ? 0 : window.setInterval(() => show(current + 1), 6000);

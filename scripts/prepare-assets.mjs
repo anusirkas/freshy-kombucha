@@ -101,3 +101,33 @@ for (const f of FLAVOURS) {
 }
 
 await writeFile("src/assets.json", JSON.stringify(manifest, null, 2));
+
+// ---------- the can photo: cut the white studio background away ----------
+// Flood-fill near-white pixels from the edges, so white highlights inside the can stay.
+{
+  const file = `${SRC}/can 1.png`;
+  const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { width: w, height: h } = info;
+  const background = new Uint8Array(w * h);
+  const isWhite = (i) => data[i * 4] > 238 && data[i * 4 + 1] > 238 && data[i * 4 + 2] > 238;
+  const stack = [];
+  for (let x = 0; x < w; x++) stack.push(x, (h - 1) * w + x);
+  for (let y = 0; y < h; y++) stack.push(y * w, y * w + w - 1);
+  while (stack.length) {
+    const i = stack.pop();
+    if (background[i] || !isWhite(i)) continue;
+    background[i] = 1;
+    const x = i % w;
+    if (x > 0) stack.push(i - 1);
+    if (x < w - 1) stack.push(i + 1);
+    if (i >= w) stack.push(i - w);
+    if (i < w * (h - 1)) stack.push(i + w);
+  }
+  const alpha = Buffer.alloc(w * h);
+  for (let i = 0; i < w * h; i++) alpha[i] = background[i] ? 0 : 255;
+  // soften the cut edge by a pixel so it doesn't look jagged
+  const soft = await sharp(alpha, { raw: { width: w, height: h, channels: 1 } }).blur(0.8).extractChannel(0).raw().toBuffer();
+  for (let i = 0; i < w * h; i++) data[i * 4 + 3] = soft[i];
+  await sharp(data, { raw: { width: w, height: h, channels: 4 } }).webp({ quality: 92, alphaQuality: 100 }).toFile(`${OUT}/can.webp`);
+  console.log("can: background removed");
+}

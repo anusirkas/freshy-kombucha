@@ -27,11 +27,13 @@
         <h1 class="word" id="word" aria-live="polite"></h1>
         <div class="fruits" id="fruits" aria-hidden="true"></div>
         <button class="can" id="can" type="button" aria-label="Next flavour"></button>
-        <div class="hero-controls">
-          <button class="arrow" id="prev" type="button" aria-label="Previous flavour">←</button>
-          <div class="dots" id="dots" role="tablist" aria-label="Choose a flavour"></div>
-          <button class="arrow" id="next" type="button" aria-label="Next flavour">→</button>
-        </div>
+        <button class="side-arrow prev" id="prev" type="button" aria-label="Previous flavour">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7" /></svg>
+        </button>
+        <button class="side-arrow next" id="next" type="button" aria-label="Next flavour">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
+        </button>
+        <div class="flavour-tabs" id="dots" role="tablist" aria-label="Choose a flavour"></div>
         <p class="hero-tag" id="hero-tag"></p>
       </section>
 

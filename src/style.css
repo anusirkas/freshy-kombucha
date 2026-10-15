@@ -142,13 +142,14 @@ button {
   transition: transform 0.7s var(--ease), opacity 0.5s ease;
 }
 
+/* letters slide sideways in the direction of travel */
 .letter.in {
-  transform: translateY(55%) rotate(6deg);
+  transform: translateX(calc(var(--dir, 1) * 90%));
   opacity: 0;
 }
 
 .letter.out {
-  transform: translateY(-55%) rotate(-6deg);
+  transform: translateX(calc(var(--dir, 1) * -90%));
   opacity: 0;
 }
 
@@ -224,56 +225,98 @@ button {
   height: 100%;
 }
 
-.hero-controls {
+/* big, obvious arrows at the sides, like any carousel */
+.side-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  translate: 0 -50%;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+  transition: transform 0.25s var(--spring), background 0.2s;
+}
+
+.side-arrow svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.side-arrow:hover {
+  background: var(--white);
+  transform: scale(1.1);
+}
+
+.side-arrow.prev {
+  left: clamp(12px, 3vw, 48px);
+}
+
+.side-arrow.next {
+  right: clamp(12px, 3vw, 48px);
+}
+
+/* flavour tabs: a tiny can and the name, the current one filled in */
+.flavour-tabs {
   position: absolute;
   left: 50%;
-  bottom: 30px;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  translate: -50% 0;
-}
-
-.arrow {
-  width: 46px;
-  height: 46px;
-  border: 2px solid var(--ink);
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.35);
-  font-size: 20px;
-  transition: background 0.2s, transform 0.2s var(--spring);
-}
-
-.arrow:hover {
-  background: var(--white);
-  transform: scale(1.08);
-}
-
-.dots {
+  bottom: 26px;
+  z-index: 6;
   display: flex;
   gap: 10px;
+  padding: 6px;
+  translate: -50% 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(8px);
 }
 
-.dot {
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  border: 2px solid var(--white);
-  border-radius: 50%;
-  background: var(--c);
-  transition: transform 0.3s var(--spring);
+.flavour-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px 6px 8px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 15px;
+  color: var(--ink);
+  transition: background 0.3s, transform 0.25s var(--spring);
 }
 
-.dot[aria-selected="true"] {
-  transform: scale(1.4);
-  border-color: var(--ink);
+.flavour-tab:hover {
+  transform: translateY(-2px);
+}
+
+.flavour-tab[aria-selected="true"] {
+  background: var(--white);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.tab-can {
+  width: 14px;
+  height: 34px;
+  border-radius: 3px;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.2), transparent 35%, rgba(255, 255, 255, 0.4) 50%, transparent 65%, rgba(0, 0, 0, 0.25)),
+    var(--tab-label) center / cover,
+    var(--c);
 }
 
 .hero-tag {
   position: absolute;
   left: 50%;
-  bottom: 88px;
+  bottom: 100px;
   z-index: 5;
   margin: 0;
   translate: -50% 0;
