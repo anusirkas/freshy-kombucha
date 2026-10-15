@@ -205,13 +205,17 @@ button {
   }
 }
 
+/* the whole hero is a control: nothing in it should get selected (the blue highlight) */
 .hero {
   touch-action: pan-y;
-  cursor: grab;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.hero:active {
-  cursor: grabbing;
+.hero img {
+  -webkit-user-drag: none;
 }
 
 .can {

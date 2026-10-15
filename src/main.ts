@@ -126,7 +126,7 @@ function show(index: number, animate = true, direction = 1) {
   document.dispatchEvent(new CustomEvent("flavour", { detail: f }));
 }
 
-// ---------- controls: tabs, the can, keys, a swipe or drag, and autoplay ----------
+// ---------- controls: tabs, clicks on either side, keys, a swipe, and autoplay ----------
 FLAVOURS.forEach((f, i) => {
   const b = document.createElement("button");
   b.type = "button";
@@ -154,28 +154,22 @@ function choose(index: number, direction = 1) {
   restartAutoplay();
 }
 
-// a swipe on a phone or a drag with the mouse; a short press on the can is a click
-let dragX: number | null = null;
-let dragged = false;
-hero.addEventListener("pointerdown", (e) => {
+// a click anywhere on the hero: the left side goes back, the right side and the can go forward
+hero.addEventListener("click", (e) => {
   if ((e.target as HTMLElement).closest(".flavour-tabs")) return;
-  dragX = e.clientX;
-  dragged = false;
+  const x = e.clientX / window.innerWidth;
+  if (x < 0.35) choose(current - 1, -1);
+  else choose(current + 1);
 });
-hero.addEventListener("pointerup", (e) => {
-  if (dragX === null) return;
-  const dx = e.clientX - dragX;
-  dragX = null;
+// phones can also swipe; touch never selects text, so no highlight
+let touchX = 0;
+hero.addEventListener("touchstart", (e) => (touchX = e.touches[0].clientX), { passive: true });
+hero.addEventListener("touchend", (e) => {
+  const dx = e.changedTouches[0].clientX - touchX;
   if (Math.abs(dx) > 50) {
-    dragged = true;
+    e.preventDefault(); // no click after a swipe
     choose(current + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
   }
-});
-hero.addEventListener("pointercancel", () => (dragX = null));
-hero.addEventListener("dragstart", (e) => e.preventDefault());
-$("can").addEventListener("click", () => {
-  if (!dragged) choose(current + 1);
-  dragged = false;
 });
 hero.addEventListener("keydown", (e) => {
   if (e.key === "ArrowRight") choose(current + 1);
