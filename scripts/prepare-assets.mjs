@@ -109,7 +109,12 @@ await writeFile("src/assets.json", JSON.stringify(manifest, null, 2));
   const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const { width: w, height: h } = info;
   const background = new Uint8Array(w * h);
-  const isWhite = (i) => data[i * 4] > 238 && data[i * 4 + 1] > 238 && data[i * 4 + 2] > 238;
+  // near-white anywhere; in the bottom strip also the light grey contact shadow under the
+  // base, which the shader would otherwise tint into a coloured halo
+  const isWhite = (i) => {
+    const limit = i / w > h * 0.93 ? 196 : 238;
+    return data[i * 4] > limit && data[i * 4 + 1] > limit && data[i * 4 + 2] > limit;
+  };
   const stack = [];
   for (let x = 0; x < w; x++) stack.push(x, (h - 1) * w + x);
   for (let y = 0; y < h; y++) stack.push(y * w, y * w + w - 1);

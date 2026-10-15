@@ -6,9 +6,9 @@ type Piece = { src: string; x: number; y: number; w: number; h: number; leaf: bo
 type FlavourAssets = { label: string; labelBg: string; pieces: Piece[] };
 
 const FLAVOURS = [
-  { id: "orange", word: "Orange", colour: "#ffa93a", tag: "Zesty orange · probiotic sparkling tea" },
-  { id: "apple", word: "Apple", colour: "#ff8989", tag: "Crisp apple · probiotic sparkling tea" },
-  { id: "lemon", word: "Lemon", colour: "#f8ed8c", tag: "Tangy lemon · probiotic sparkling tea" },
+  { id: "orange", word: "Orange", colour: "#ffa93a" },
+  { id: "apple", word: "Apple", colour: "#ff8989" },
+  { id: "lemon", word: "Lemon", colour: "#f8ed8c" },
 ] as const;
 type Flavour = (typeof FLAVOURS)[number];
 
@@ -17,7 +17,6 @@ const hero = $("hero");
 const wipe = $("hero-wipe");
 const word = $("word");
 const fruitsEl = $("fruits");
-const tag = $("hero-tag");
 const dots = $("dots");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -122,7 +121,6 @@ function show(index: number, animate = true, direction = 1) {
   }
   setWord(f.word, motion, direction);
   setFruit(f, motion);
-  tag.textContent = f.tag;
   hero.dataset.flavour = f.id;
   setControls();
   document.dispatchEvent(new CustomEvent("flavour", { detail: f }));
@@ -216,15 +214,25 @@ const say = (el: HTMLElement, text: string) => {
 $("buy").addEventListener("click", () => say(toast, "This is a demo: there's no checkout, but thank you for wanting some."));
 $("reseller").addEventListener("click", () => say(toast, "This is a demo page; the reseller programme is imaginary."));
 
-// ---------- testimonials: step through, one card at a time ----------
+// ---------- testimonials: step through with the arrows, wrapping at the ends ----------
 const quotes = $("quotes");
 let quoteIndex = 0;
-$("quotes-next").addEventListener("click", () => {
-  const cards = quotes.children.length;
+const stepQuotes = (delta: number) => {
   const visible = window.innerWidth > 900 ? 3 : 1;
-  quoteIndex = (quoteIndex + 1) % (cards - visible + 1);
+  const stops = quotes.children.length - visible + 1;
+  quoteIndex = (quoteIndex + delta + stops) % stops;
   quotes.style.setProperty("--shift", String(quoteIndex));
+};
+$("quotes-next").addEventListener("click", () => stepQuotes(1));
+$("quotes-prev").addEventListener("click", () => stepQuotes(-1));
+// swipe on phones
+let quoteTouch = 0;
+quotes.addEventListener("touchstart", (e) => (quoteTouch = e.touches[0].clientX), { passive: true });
+quotes.addEventListener("touchend", (e) => {
+  const dx = e.changedTouches[0].clientX - quoteTouch;
+  if (Math.abs(dx) > 40) stepQuotes(dx < 0 ? 1 : -1);
 });
+window.addEventListener("resize", () => stepQuotes(0));
 
 // ---------- contact form (no backend: just a friendly confirmation) ----------
 const form = $<HTMLFormElement>("form");

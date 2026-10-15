@@ -216,7 +216,6 @@ button {
   padding: 0;
   border: 0;
   background: none;
-  filter: drop-shadow(0 40px 30px rgba(0, 0, 0, 0.22));
 }
 
 .can canvas {
@@ -311,18 +310,6 @@ button {
     linear-gradient(90deg, rgba(0, 0, 0, 0.2), transparent 35%, rgba(255, 255, 255, 0.4) 50%, transparent 65%, rgba(0, 0, 0, 0.25)),
     var(--tab-label) center / cover,
     var(--c);
-}
-
-.hero-tag {
-  position: absolute;
-  left: 50%;
-  bottom: 100px;
-  z-index: 5;
-  margin: 0;
-  translate: -50% 0;
-  font-family: var(--text);
-  font-size: 16px;
-  white-space: nowrap;
 }
 
 /* ---------- Shared section look ---------- */
@@ -649,10 +636,16 @@ main > section:not(.hero) {
   font-size: 16px;
 }
 
-.quotes-next {
-  position: absolute;
-  right: -10px;
-  bottom: 30px;
+.quotes-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(8px, 2vw, 24px);
+}
+
+.quotes-row .side-arrow {
+  position: static;
+  translate: none;
 }
 
 /* ---------- Resellers ---------- */
@@ -810,15 +803,56 @@ main > section:not(.hero) {
 }
 
 @media (max-width: 600px) {
+  .nav {
+    padding: 18px 20px;
+  }
   .nav nav {
     gap: 14px;
+  }
+  /* on a phone the tabs and a swipe are enough; side arrows would sit on the fruit */
+  .hero .side-arrow {
+    display: none;
+  }
+  .flavour-tabs {
+    bottom: 18px;
+    gap: 4px;
+  }
+  .flavour-tab {
+    padding: 6px 12px 6px 6px;
+    font-size: 14px;
+  }
+  .quotes-row .side-arrow {
+    width: 44px;
+    height: 44px;
+  }
+  .quotes-row .side-arrow svg {
+    width: 20px;
+    height: 20px;
+  }
+  .quotes li {
+    padding: 0 8px;
+  }
+  .contact-grid {
+    text-align: center;
+  }
+  .contact-lead br {
+    display: none;
+  }
+  .socials {
+    justify-items: center;
+    margin-top: 28px;
+  }
+  .form {
+    text-align: left;
+    padding: 22px 20px;
   }
   .word {
     font-size: 30vw;
   }
   .can {
-    width: 52vw;
-    height: 70vh;
+    width: 46vw;
+    height: 56svh;
+    translate: -50% -54%;
   }
   .pack-cans {
     grid-template-columns: repeat(6, 16px);
